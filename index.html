@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campainha NFC</title>
+    <script>
+        function tocarCampainha() {
+            fetch("https://api.telegram.org/bot7761704256:AAFjKhIIjUptkMj84pnUU0VG5u5K_VFaJWg/sendMessage?chat_id=5562266493&text=Alguém%20tocou%20a%20campainha%20NFC!")
+                .then(response => {
+                    document.getElementById("msg").innerText = "🔔 Campainha tocada com sucesso!";
+                })
+                .catch(error => {
+                    document.getElementById("msg").innerText = "Erro ao tocar a campainha.";
+                });
+        }
+    </script>
+</head>
+<body onload="tocarCampainha()">
+    <h2>🔔 Campainha NFC</h2>
+    <p id="msg">Aguardando...</p>
+</body>
+</html>
