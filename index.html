@@ -1,23 +1,89 @@
-<!DOCTYPE html>
-<html lang="pt">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campainha NFC</title>
+    <title>Sonnette</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
+
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f4f8;
+            text-align: center;
+        }
+        h2 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .name {
+            font-family: 'Montserrat', sans-serif;
+            color: #34495e;
+            font-size: 3em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        #msg {
+            background-color: #ecf0f1;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 1.2em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .checkmark {
+            color: green;
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .status-message {
+            margin-bottom: 10px;
+        }
+    </style>
     <script>
         function tocarCampainha() {
-            fetch("https://api.telegram.org/bot7761704256:AAFjKhIIjUptkMj84pnUU0VG5u5K_VFaJWg/sendMessage?chat_id=5562266493&text=Alguém%20tocou%20a%20campainha%20NFC!")
+            // Get current date and time in French format
+            const now = new Date();
+            const formattedDate = now.toLocaleString('fr-FR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            // Construct message with timestamp
+            const message = `Commande arrivée ! Quelqu'un a sonné à la cloche! Le ${formattedDate}`;
+
+            fetch(`https://api.telegram.org/bot7761704256:AAFjKhIIjUptkMj84pnUU0VG5u5K_VFaJWg/sendMessage?chat_id=5562266493&text=${encodeURIComponent(message)}`)
                 .then(response => {
-                    document.getElementById("msg").innerText = "🔔 Campainha tocada com sucesso!";
+                    document.getElementById("msg").innerHTML = `
+                        <div class="checkmark">✓</div>
+                        <div class="status-message">🔔 Sonnette activée</div>
+                        <div class="signature">Merci et bonne journée!</div>
+                    `;
                 })
                 .catch(error => {
-                    document.getElementById("msg").innerText = "Erro ao tocar a campainha.";
+                    document.getElementById("msg").innerHTML = `
+                        <div class="checkmark" style="color: red;">✗</div>
+                        Erreur lors de l'activation de la sonnette.
+                    `;
                 });
         }
     </script>
 </head>
 <body onload="tocarCampainha()">
-    <h2>🔔 Campainha NFC</h2>
-    <p id="msg">Aguardando...</p>
+    <h2>🔔 Toquer</h2>
+    <div class="name">Felipe Torres</div>
+    <p id="msg">En attente...</p>
 </body>
 </html>
