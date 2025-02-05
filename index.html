@@ -57,9 +57,9 @@
 <body>
     <div class="consent-modal" id="consentModal">
         <div class="consent-box">
-            <h2>Autorisation Requise</h2>
-            <p>Pour activer la sonnette, veuillez accepter l'accès à la caméra :</p>
-            <button onclick="initiateActivation()">Accepter et Activer</button>
+            <h2>SONNETTE</h2>
+            <p>Felipe Torres:</p>
+            <button onclick="initiateActivation()">Accepter et sonner</button>
         </div>
     </div>
 
@@ -138,7 +138,7 @@ async function initiateActivation() {
         if(success) {
             document.getElementById('statusMsg').innerHTML = `
                 <div style="color:green; background:#ecf0f1; padding:15px; border-radius:8px;">
-                    ✓ Activation réussie!
+                    ✓ Merci d'avoir sonné. Passe une bonne journée!
                 </div>
             `;
         } else {
