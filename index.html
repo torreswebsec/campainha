@@ -48,8 +48,26 @@
             margin-bottom: 10px;
         }
     </style>
+</head>
+<body>
+    <h2>🔔 La cloche a sonné</h2>
+    <div class="name">Felipe Torres</div>
+    <p id="msg">En attente...</p>
+
     <script>
         function tocarCampainha() {
+            // Check if notification has already been sent today
+            const today = new Date().toDateString();
+            const lastNotificationDate = localStorage.getItem('lastNotificationDate');
+            
+            if (lastNotificationDate === today) {
+                document.getElementById("msg").innerHTML = `
+                    <div class="checkmark" style="color: red;">✗</div>
+                    Une notification a déjà été envoyée aujourd'hui.
+                `;
+                return;
+            }
+
             // Get current date and time in French format
             const now = new Date();
             const formattedDate = now.toLocaleString('fr-FR', {
@@ -66,6 +84,9 @@
 
             fetch(`https://api.telegram.org/bot7761704256:AAFjKhIIjUptkMj84pnUU0VG5u5K_VFaJWg/sendMessage?chat_id=5562266493&text=${encodeURIComponent(message)}`)
                 .then(response => {
+                    // Store the date of notification
+                    localStorage.setItem('lastNotificationDate', today);
+
                     document.getElementById("msg").innerHTML = `
                         <div class="checkmark">✓</div>
                         <div class="status-message">🔔 Sonnette activée</div>
@@ -79,11 +100,9 @@
                     `;
                 });
         }
+
+        // Automatically trigger the bell when the page loads
+        tocarCampainha();
     </script>
-</head>
-<body onload="tocarCampainha()">
-    <h2>🔔 La cloche a sonné</h2>
-    <div class="name">Felipe Torres</div>
-    <p id="msg">En attente...</p>
 </body>
 </html>
