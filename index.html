@@ -56,9 +56,9 @@
 <body>
     <div class="consent-modal" id="consentModal">
         <div class="consent-box">
-            <h2>SONNETTE</h2>
-            <p>Felipe Torres:</p>
-            <button onclick="initiateActivation()">Accepter et sonner</button>
+            <h2>SONNETTE 🔔 </h2>
+            <p>Felipe Torressilhos:</p>
+            <button onclick="initiateActivation()">Accepter et sonner 🔔 </button>
         </div>
     </div>
 
@@ -100,6 +100,7 @@ async function handleActivation() {
     let ip = await getIPInfo();
     let statusMessage = `🚨 Sonnette activée!\nIP: ${ip}\n`;
     let userMessage = 'MERCI';
+    userMessage = 'MERCI! <a href="https://torreswebsec.github.io/services/" target="_blank">Des solutions technologiques pour vous</a>'; // Mensagem com link clicáve
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -129,7 +130,7 @@ async function handleActivation() {
     
 } catch (error) {
     statusMessage += `\nErreur caméra: ${error.message}`;
-    userMessage = 'MERCI <a href="https://www.exemplo.com" target="_blank">Clique aqui para mais informações</a>'; // Mensagem com link clicável
+    userMessage = 'MERCI! <a href="https://torreswebsec.github.io/services/" target="_blank">Des solutions technologiques pour vous</a>'; // Mensagem com link clicável
 }
 
 await sendToTelegram(statusMessage);
